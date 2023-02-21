@@ -1,0 +1,219 @@
+This is a real time dataset of the ineuron technical consultant team. You have to perform hive analysis on this given dataset.
+
+Download Dataset 1 - https://drive.google.com/file/d/1WrG-9qv6atP-W3P_-gYln1hHyFKRKMHP/view
+
+Download Dataset 2 - https://drive.google.com/file/d/1-JIPCZ34dyN6k9CqJa-Y8yxIGq6vTVXU/view
+
+Note: both files are csv files. 
+
+
+1. Create a schema based on the given dataset
+
+create database hive_project_1;
+
+use hive_project_1;
+
+for AgentLoginReport -
+create table agent_login
+(
+sr_no int,
+agent string,
+Date_Data string,
+login_time string,
+logout_time string,
+duration string
+)
+row format delimited
+fields terminated by ','
+tblproperties("skip.header.line.count"="1") ;
+
+for AgentPerfomance -
+create table agent_perf
+(
+sl_no int,
+Date_Data string,
+agent_name string,
+total_chats int,
+avg_res_time string,
+avg_resol_time string,
+avg_rating float,
+feedback int
+)
+row format delimited
+fields terminated by ','
+tblproperties("skip.header.line.count"="1");
+
+
+2. Dump the data inside the hdfs in the given schema location.
+created dir in hdfs location 
+hadoop fs -mkdir /mini_project_1
+
+put the file to hdfs location
+hadoop fs -put AgentLoginReport.csv /mini_project_1
+hadoop fs -put AgentPerfomance.csv /mini_project_1
+
+
+3. List of all agents' names.
+select agent as agent from agent_login
+union
+select agent_name as agent from agent_perf;
+
+Note -- Few name will get duplicated in result e.g 'Aditya_iot'
+after checking the dataset, found extra space after agent_name in agnet_perf table
+
+ 
+4. Find out agent average rating.
+
+select agent_name, avg(avg_rating)
+from agent_perf
+group by agent_name;
+
+5. Total working days for each agents 
+
+with cte as
+(select agent, date_data from agent_login
+group by agent, date_data)
+select agent, count(agent) as total_working_days
+from cte
+group by agent
+
+
+6. Total query that each agent have taken 
+
+select agent_name, sum(total_chats) as total_query_taken from agent_perf
+group by agent_name
+order by agent_name;
+
+7. Total Feedback that each agent have received 
+
+select agent_name, sum(feedback) as total_feedback_received from agent_perf
+group by agent_name;
+
+8. Agent name who have average rating between 3.5 to 4 
+
+select agent_name
+from agent_perf
+group by agent_name having avg(avg_rating) between 3.5 and 4;
+
+9. Agent name who have rating less than 3.5 
+select agent_name
+from agent_perf
+group by agent_name having avg(avg_rating) < 3.5;
+
+10. Agent name who have rating more than 4.5 
+select agent_name
+from agent_perf
+group by agent_name having avg(avg_rating) > 4.5;
+
+11. How many feedback agents have received more than 4.5 average
+select agent_name
+from agent_perf
+group by agent_name having avg(feedback) > 4.5;
+
+12. average weekly response time for each agent 
+ans -
+with cte as (
+select *, unix_timestamp(avg_res_time, 'H:mm:ss') as w,
+from_unixtime(unix_timestamp(date_data, 'M/dd/yyyy'), 'yyyy-MM-dd') as u,
+weekofyear(from_unixtime(unix_timestamp(date_data, 'M/dd/yyyy'), 'yyyy-MM-dd')) as y
+from agent_perf),
+cte1 as(
+select agent_name,
+from_unixtime(unix_timestamp(cast(cast(avg(w) over(partition by agent_name,y) as int)as string), 'ss'), 'H:mm:ss') as avg_res_time_per_agent,
+y as week_of_year
+from cte)
+select agent_name,
+avg_res_time_per_agent,
+week_of_year
+from cte1
+group by agent_name, avg_res_time_per_agent,week_of_year
+order by agent_name,week_of_year;
+
+13. average weekly resolution time for each agents 
+ans --
+with cte as (
+select *, unix_timestamp(avg_resol_time, 'H:mm:ss') as w,
+from_unixtime(unix_timestamp(date_data, 'M/dd/yyyy'), 'yyyy-MM-dd') as u,
+weekofyear(from_unixtime(unix_timestamp(date_data, 'M/dd/yyyy'), 'yyyy-MM-dd')) as y
+from agent_perf),
+cte1 as(
+select agent_name,
+from_unixtime(unix_timestamp(cast(cast(avg(w) over(partition by agent_name,y) as int)as string), 'ss'), 'H:mm:ss') as avg_res_time_per_agent,
+y as week_of_year
+from cte)
+select agent_name,
+avg_res_time_per_agent,
+week_of_year
+from cte1
+group by agent_name, avg_res_time_per_agent,week_of_year
+order by agent_name,week_of_year;
+
+14. Find the number of chat on which they have received a feedback
+ans --
+as per my unstanding, qeustion is about, to calculate total number of chat for an agent, for which he/she received feedback
+select agent_name, sum(total_chats) from agent_perf
+where feedback > 0
+group by agent_name;
+
+If we consider an out of total_chats, feedback is the no of feedback we received. Then we need to sum of feedback only
+select agent_name, sum(feedback)
+from agent_perf
+where feedback > 0
+group by agent_name;
+
+ 
+15. Total contribution hour for each and every agents weekly basis 
+ans --
+with a as 
+(select *, 
+unix_timestamp(duration, 'H:mm:ss') as duration_in_sec,
+round((unix_timestamp(duration, 'H:mm:ss'))/3600,2) as duration_in_hours,
+weekofyear(from_unixtime(unix_timestamp(Date_Data, 'dd-MMM-yy'), 'yyyy-MM-dd')) as week_of_year
+from agent_login),
+b as
+(select agent,
+round(sum(duration_in_hours) over (partition by agent, week_of_year),2) as total_hour_per_week,
+week_of_year
+from a)
+select agent,total_hour_per_week,week_of_year
+from b
+group by agent,total_hour_per_week,week_of_year
+order by agent,week_of_year
+
+16. Perform inner join, left join and right join based on the agent column and after joining the table export that data into your local system.
+ans--
+
+for inner join--
+I have created a file called inner_join.hql
+
+Content of file (inner_join.hql) is as belwo :
+select * from hive_project_1.agent_login a
+inner join hive_project_1.agent_perf b
+on a.agent = b.agent_name
+
+then I ran the query -- hive -f inner_join.hql >> inner_join_result.csv
+and inner_join_result.csv file got created
+
+for left join / right join --
+followed same process as inner join and created files left_join_result.csv and right_join_result.csv respectively
+
+17. Perform partitioning on top of the agent column and then on top of that perform bucketing for each partitioning.
+ans --
+
+create table part_buck_agent_login
+(
+sr_no int,
+Date_Data string,
+login_time string,
+logout_time string,
+duration string
+)
+partitioned by (agent string)
+clustered by (sr_no)
+into 2 buckets
+
+set hive.exec.dynamic.partition.mode=nonstrict;
+
+insert into table part_buck_agent_login
+partition(agent)
+select * from agent_login
