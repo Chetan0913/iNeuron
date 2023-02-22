@@ -1,0 +1,142 @@
+Q1. How do you load a CSV file into a Pandas DataFrame?
+ans -- We can use 'read_csv' function
+
+
+Q2. How do you check the data type of a column in a Pandas DataFrame?
+ans -- with the help of 'info' function
+ex - df.info()
+
+
+Q3. How do you select rows from a Pandas DataFrame based on a condition?
+ans -- with the help of 'loc' attribute.
+ex - df.loc['row_name']
+
+
+Q4. How do you rename columns in a Pandas DataFrame?
+ans -- with the help of 'rename' function
+ex - df.rename(columns = {'old_name':'new_name'})
+
+
+Q5. How do you drop columns in a Pandas DataFrame?
+ans -- with the help of 'drop' funtion
+ex - df.drop(['col_name1','col_name2'], axis=1)
+
+
+Q6. How do you find the unique values in a column of a Pandas DataFrame?
+ans -- with the help of 'unique' funtion
+ex - df.col_name.unique()
+
+
+Q7. How do you find the number of missing values in each column of a Pandas DataFrame?
+ans -- info function can help us with the details of not_null values count
+
+
+Q8. How do you fill missing values in a Pandas DataFrame with a specific value?
+ans -- with the help of 'fillna' funtion
+ex - df1.fillna(value_that_need_to_fill)
+
+
+Q9. How do you concatenate two Pandas DataFrames?
+ans -- withe the help of 'concat' function or 'append' funtion
+ex - pd.concat([df1,df2])
+ex - df1.append(df2)
+
+
+Q10. How do you merge two Pandas DataFrames on a specific column?
+ans -- We can use 'merge' funtion
+ex - df1.merge(df2['col_name'])
+
+
+Q11. How do you group data in a Pandas DataFrame by a specific column and apply an aggregation function?
+ans -- we can use 'aggregate' funtion. aggregation funtions like 'sum', 'max', 'min'
+ex - df.aggregat({col_name: 'sum'})
+
+
+Q12. How do you pivot a Pandas DataFrame?
+ans -- with the help of 'pivot' funtion
+ex - df.pivot(index= 'col_name_need_to_act_like_row', columns= 'col_name_need_to_act_like_column')
+
+
+Q13. How do you change the data type of a column in a Pandas DataFrame?
+ans -- with the help of passing the dic of col_name as key and datatype as value to the 'astype' funtion.
+ex - df.astye({'col_name':'datatype'})
+
+
+Q14. How do you sort a Pandas DataFrame by a specific column?
+ans -- with the help of 'sort_values' funtion.
+ex - df.sort_values(by = 'col_name')
+	if assending - df.sort_values(by = 'col_name', ascending=False)
+
+
+Q15. How do you create a copy of a Pandas DataFrame?
+ans -- with the help of 'copy' funtion
+ex = new_df = df.copy()
+
+
+Q16. How do you filter rows of a Pandas DataFrame by multiple conditions?
+ans -- With help of loc[] or 'query' function
+ex - df.loc[(condition1) and (condition2)]
+
+
+Q17. How do you calculate the mean of a column in a Pandas DataFrame?
+ans -- with the help of describe() or aggregate()
+ex - 
+df1.describe()
+df1.aggregate({'col_name':'mean'})
+
+
+Q18. How do you calculate the standard deviation of a column in a Pandas DataFrame?
+ans -- with the help of describe() or aggregate()
+ex - 
+df1.describe()
+df1.aggregate({'col_name':'std'})
+
+
+Q19. How do you calculate the correlation between two columns in a Pandas DataFrame?
+ans -- with the help fo corr()
+ex - df[col_1].corr(df[col_2])
+
+
+Q20. How do you select specific columns in a DataFrame using their labels?
+ans -- we can use df[col_name] to select specific column in dataframe
+
+
+Q21. How do you select specific rows in a DataFrame using their indexes?
+ans -- we can use loc[] to select specific row
+ex - df.loc[]
+
+
+Q22. How do you sort a DataFrame by a specific column?
+ans -- with the help of 'sort_values' funtion.
+ex - df.sort_values(by = 'col_name')
+	if assending - df.sort_values(by = 'col_name', ascending=False)
+
+
+Q23. How do you create a new column in a DataFrame based on the values of another column?
+ans - consider we have an dataframe 
+	a	b
+0	3	4
+1	2	5
+2	6	8
+3	1	1
+4	4	5
+
+if we will run this -- df3['sum_a_b'] =df3['a']+df3['b'].
+the result will be-
+   a  b  sum_a_b
+0  3  4        7
+1  2  5        7
+2  6  6       12
+3  1  1        2
+4  4  5        9
+
+
+Q24. How do you remove duplicates from a DataFrame?
+ans -- with the help of drop_duplicates()
+ex - df.drop_duplicates()
+
+Q25. What is the difference between .loc and .iloc in Pandas?
+ans --
+The loc() function is label based data selecting method which means that we have to pass the name of the row or column which we want to select. This method includes the last element of the range passed in it, unlike iloc(). loc() can accept the boolean data unlike iloc().
+
+The iloc() function is an indexed-based selecting method which means that we have to pass an integer index in the method to select a specific row/column. This method does not include the last element of the range passed in it unlike loc(). iloc() does not accept the boolean data unlike loc().
