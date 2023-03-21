@@ -1,0 +1,518 @@
+ans 101 --
+select distinct username, activity, startDate, endDate
+from (
+select u.*,
+rank() over (partition by username order by startDate desc) as rnk,
+count(activity) over (partition by username) as num
+from UserActivity u) a
+where (num <> 1 and rnk = 2) or (num = 1 and rnk = 1);
+
+ans 102 --
+select distinct username, activity, startDate, endDate
+from (
+select u.*,
+rank() over (partition by username order by startDate desc) as rnk,
+count(activity) over (partition by username) as num
+from UserActivity u) a
+where (num <> 1 and rnk = 2) or (num = 1 and rnk = 1);
+
+ans 103 --
+SELECT NAME FROM STUDENTS WHERE MARKS > 75 ORDER BY RIGHT(NAME,3), ID ASC;
+
+ans 104 --
+SELECT name FROM Employee WHERE salary > 2000 AND months < 10 ORDER BY employee_id;
+
+ans 105 --
+SELECT CASE
+WHEN A + B <= C OR A + C <= B OR B + C <= A THEN 'Not A Triangle'
+WHEN A = B AND B = C THEN 'Equilateral'
+WHEN A = B OR B = C OR A = C THEN 'Isosceles'
+ELSE 'Scalene'
+END
+FROM TRIANGLES;
+
+ans 106 --
+select ceil(avg(salary) - avg(replace(salary, '0', ''))) from EMPLOYEES;
+
+ans 107 --
+select MAX(salary*months), COUNT(*) from Employee where (salary * months) >= (select MAX(salary * months) from Employee);
+
+ans 108 --
+(SELECT CONCAT(NAME, '(', SUBSTRING(Occupation, 1, 1), ')') as THETEXT, '1' as SELECTNUMBER
+FROM OCCUPATIONS)
+UNION ALL 
+(SELECT CONCAT('There are total ', COUNT(*),' ', Occupation, (IF (COUNT(*) > 1, 's',''))) as THETEXT, '2' as SELECTNUMBER
+FROM OCCUPATIONS GROUP BY Occupation)
+ORDER BY SELECTNUMBER ASC, THETEXT ASC;
+
+ans 109 --
+select
+    Doctor,
+    Professor,
+    Singer,
+    Actor
+from (
+    select
+        NameOrder,
+        max(case Occupation when 'Doctor' then Name end) as Doctor,
+        max(case Occupation when 'Professor' then Name end) as Professor,
+        max(case Occupation when 'Singer' then Name end) as Singer,
+        max(case Occupation when 'Actor' then Name end) as Actor
+    from (
+            select
+                Occupation,
+                Name,
+                row_number() over(partition by Occupation order by Name ASC) as NameOrder
+            from OCCUPATIONS
+         ) as NameLists
+    group by NameOrder
+    ) as Names;
+
+ans 110 --
+SELECT N,
+CASE
+WHEN P IS NULL THEN 'Root'
+WHEN N IN (SELECT P FROM BST) THEN 'Inner'
+ELSE 'Leaf'
+END
+FROM BST
+ORDER by N;
+
+ans 111 --
+SELECT c.company_code, c.founder, COUNT(DISTINCT e.lead_manager_code), COUNT(DISTINCT e.senior_manager_code), COUNT(DISTINCT e.manager_code), COUNT(DISTINCT e.employee_code) FROM Company c
+JOIN Employee e ON c.company_code = e.company_code GROUP BY c.company_code, c.founder ORDER BY c.company_code;
+
+ans 112 --
+select listagg(Prime_Number,'&') within group(order by Prime_Number)
+from (select L Prime_Number from
+     (select Level L 
+     from Dual
+     connect by Level <= 1000),
+     (select Level M
+     from Dual
+     connect by Level <= 1000)
+     where M <= L
+     group by L
+     having count(case when L/M = trunc(L/M) then 'Y' end) = 2
+     order by L);
+
+ans 113 --
+SELECT SYS_CONNECT_BY_PATH(NULL, '* ') FROM DUAL CONNECT BY ROWNUM <= 20 ORDER BY 1 DESC;
+
+ans 114 --
+SELECT REPEAT('* ', @no_of_lines := @no_of_lines -1) 
+FROM INFORMATION_SCHEMA.TABLES
+WHERE @no_of_lines > 0;
+
+ans 115 --
+SELECT NAME FROM STUDENTS WHERE MARKS > 75 ORDER BY RIGHT(NAME,3), ID ASC;
+
+ans 116 --
+SELECT f1.X, f1.Y FROM Functions AS f1 
+WHERE f1.X = f1.Y AND
+(SELECT COUNT(*) FROM Functions WHERE X = f1.X AND Y = f1.Y) > 1
+UNION
+SELECT f1.X, f1.Y from Functions AS f1
+WHERE EXISTS(SELECT X, Y FROM Functions WHERE f1.X = Y AND f1.Y = X AND f1.X < X)
+ORDER BY X;
+
+ans 117 --
+SELECT name FROM Employee ORDER BY name;
+
+ans 118 --
+SELECT name FROM Employee WHERE salary > 2000 AND months < 10 ORDER BY employee_id;
+
+ans 119 --
+SELECT CASE
+WHEN A + B <= C OR A + C <= B OR B + C <= A THEN 'Not A Triangle'
+WHEN A = B AND B = C THEN 'Equilateral'
+WHEN A = B OR B = C OR A = C THEN 'Isosceles'
+ELSE 'Scalene'
+END
+FROM TRIANGLES;
+
+ans 120 --
+with cte as (
+  SELECT
+    DATE_PART('year', transaction_date) as year,
+    product_id,
+    spend as curr_year_spend,
+    lag(spend)OVER(PARTITION BY product_id ORDER BY DATE_PART('year', transaction_date)) as prev_year_spend
+  FROM user_transactions
+)
+SELECT
+  year,
+  product_id,
+  curr_year_spend,
+  prev_year_spend,
+  CASE
+    WHEN prev_year_spend IS NULL THEN NULL
+    ELSE ROUND(100*(curr_year_spend - prev_year_spend)/ prev_year_spend, 2)
+  END as yoy_rate
+FROM cte
+
+ans 121 --
+WITH cte as(
+SELECT item_type as it, count(square_footage) as cit, SUM(square_footage) as sit,
+TRUNC((500000 / sum(square_footage)),0) as str_cat,
+(TRUNC((500000 / sum(square_footage)),0)*count(square_footage)) as str_cat_count
+FROM inventory
+group by item_type)
+select it as item_type, str_cat_count as item_count from cte
+where it = 'prime_eligible'
+UNION
+SELECT it as item_type, 
+TRUNC(((500000 - (select str_cat * sit from cte where it = 'prime_eligible'))/ (select sit from cte where it = 'not_prime')),0) * (select cit from cte where it = 'not_prime') as itme_count 
+from cte
+where it = 'not_prime'
+order by item_count DESC
+
+ans 122 --
+with cte as (
+SELECT *,
+lag(event_date) OVER(PARTITION BY user_id order by event_date) as t 
+FROM user_actions
+where EXTRACT(month from event_date) = 6 or EXTRACT(month from event_date) = 7)
+select '7' as month, count(user_id) as monthly_active_user
+from cte
+where (EXTRACT(month from event_date) - EXTRACT(month from t)) = 1
+
+ans 123 --
+WITH cte AS (
+SELECT searches
+FROM search_frequency
+GROUP BY 
+searches, 
+GENERATE_SERIES(1, num_users))
+SELECT 
+ROUND(PERCENTILE_CONT(0.50) WITHIN GROUP (
+ORDER BY searches)::DECIMAL, 1) AS  median
+FROM cte;
+
+ans 124 --
+select 
+coalesce(a.user_id, dp.user_id) as user_id, 
+case when a.user_id is null then 'NEW'
+when dp.user_id is null then 'CHURN' 
+when a.status = 'CHURN' then 'RESURRECT'
+else 'EXISTING' end as new_status
+from advertiser a 
+full join daily_pay dp 
+on a.user_id = dp.user_id
+order by 1
+
+ans 125 --
+WITH payments AS (
+  SELECT 
+    merchant_id, 
+    EXTRACT(EPOCH FROM transaction_timestamp - 
+      LAG(transaction_timestamp) OVER(
+        PARTITION BY merchant_id, credit_card_id, amount 
+        ORDER BY transaction_timestamp)
+    )/60 AS minute_difference 
+  FROM transactions) 
+
+SELECT COUNT(merchant_id) AS payment_count
+FROM payments 
+WHERE minute_difference <= 10;
+
+
+ans 127 --
+select s1.gender, s1.day, sum(s2.score_points) as total from Scores s1, Scores s2
+where s1.gender = s2.gender and s1.day >= s2.day
+group by s1.gender, s1.day
+order by s1.gender, s1.day;
+
+
+ans 128 --
+SELECT
+ co.name AS country
+FROM
+ Person p
+ JOIN
+     Country co
+     ON SUBSTRING(phone_number,1,3) = country_code
+ JOIN
+     Calls c
+     ON p.id IN (c.caller_id, c.callee_id)
+GROUP BY
+ co.name
+HAVING
+ AVG(duration) > (SELECT AVG(duration) FROM Calls);
+
+
+ans 129 --
+with recursive rec_cte as
+(
+select num,frequency,1 asc cnt
+    from Numbers 
+    UNION
+select num,frequency,cnt+1 as cnt 
+    from rec_cte
+where cnt < frequency
+),
+med_cte as 
+(
+    SELECT num,frequency,cnt,
+    row_number() over (order by num) row_num,
+    count(*) over () tot_count
+    from rec_cte
+)
+select case when MOD(tot_count,2) = 0 then round(avg(num),1) 
+else round(num,1) end as median
+from med_cte 
+where row_num BETWEEN 
+tot_count/2 and tot_count/2+1;
+
+
+ans 130 --
+select 
+    pay_month,
+    department_id, 
+    case when dept_avg > comp_avg then 'higher' when dept_avg < comp_avg then 'lower' else 'same' end comparison
+from (
+        select  date_format(b.pay_date, '%Y-%m') pay_month, a.department_id, avg(b.amount) dept_avg,  d.comp_avg
+        from Employee a 
+        inner join Salary b
+            on (a.employee_id = b.employee_id) 
+        inner join (select date_format(c.pay_date, '%Y-%m') pay_month, avg(c.amount) comp_avg 
+                    from Salary c 
+                    group by date_format(c.pay_date, '%Y-%m')) d 
+            on ( date_format(b.pay_date, '%Y-%m') = d.pay_month)
+group by date_format(b.pay_date, '%Y-%m'), department_id, d.comp_avg) final;
+
+
+ans 131 --
+select a1.event_date as install_dt, count(a1.player_id) as installs, round(count(a3.player_id) / count(a1.player_id), 2) as Day1_retention
+    from Activity a1 left join Activity a2
+    on a1.player_id = a2.player_id and a1.event_date > a2.event_date
+    left join Activity a3
+    on a1.player_id = a3.player_id and datediff(a3.event_date, a1.event_date) = 1
+    where a2.event_date is null
+    group by a1.event_date;
+
+
+ans 132 --
+select group_id, player_id from (
+	select p.group_id, ps.player_id, sum(ps.score) as score
+	from Players p,
+	    (
+            select first_player as player_id, first_score as score
+            from Matches
+            union all
+            select second_player, second_score
+            from Matches
+	    ) ps
+	where p.player_id = ps.player_id
+	group by ps.player_id
+	order by group_id, score desc, player_id
+	-- limit 1 -- by default, groupby will pick the first one i.e. max score player here
+) top_scores
+group by group_id;
+
+
+ans 133 --
+select 
+   Student.*
+from Exam 
+inner join Student on Student.student_id=Exam.student_id
+group by student_id 
+having max(score) not in (select max(score) from Exam) 
+   and min(score) not in (select min(score) from Exam);
+
+
+ans 134 --
+select 
+   Student.*
+from Exam 
+inner join Student on Student.student_id=Exam.student_id
+group by student_id 
+having max(score) not in (select max(score) from Exam) 
+   and min(score) not in (select min(score) from Exam);
+
+
+ans 135 --
+select distinct username, activity, startDate, endDate
+from
+    (select u.*,
+           rank() over (partition by username order by startDate desc) as rnk,
+           count(activity) over (partition by username) as num
+    from UserActivity u) t
+where (num <> 1 and rnk = 2) or (num = 1 and rnk = 1);
+
+
+ans 136 --
+select distinct username, activity, startDate, endDate
+from
+    (select u.*,
+           rank() over (partition by username order by startDate desc) as rnk,
+           count(activity) over (partition by username) as num
+    from UserActivity u) t
+where (num <> 1 and rnk = 2) or (num = 1 and rnk = 1);
+
+
+ans 137 --
+select ceil(avg(salary) - avg(replace(salary, '0', ''))) from EMPLOYEES;
+
+
+ans 138 --
+select MAX(salary*months), COUNT(*) from Employee where (salary * months) >= (select MAX(salary * months) from Employee);
+
+
+ans 139 --
+(SELECT CONCAT(NAME, '(', SUBSTRING(Occupation, 1, 1), ')') as THETEXT, '1' as SELECTNUMBER
+FROM OCCUPATIONS)
+UNION ALL 
+(SELECT CONCAT('There are total ', COUNT(*),' ', Occupation, (IF (COUNT(*) > 1, 's',''))) as THETEXT, '2' as SELECTNUMBER
+FROM OCCUPATIONS GROUP BY Occupation)
+ORDER BY SELECTNUMBER ASC, THETEXT ASC;
+
+
+ans 140 --
+select
+    Doctor,
+    Professor,
+    Singer,
+    Actor
+from (
+    select
+        NameOrder,
+        max(case Occupation when 'Doctor' then Name end) as Doctor,
+        max(case Occupation when 'Professor' then Name end) as Professor,
+        max(case Occupation when 'Singer' then Name end) as Singer,
+        max(case Occupation when 'Actor' then Name end) as Actor
+    from (
+            select
+                Occupation,
+                Name,
+                row_number() over(partition by Occupation order by Name ASC) as NameOrder
+            from OCCUPATIONS
+         ) as NameLists
+    group by NameOrder
+    ) as Names;
+
+
+ans 141 --
+SELECT N,
+CASE
+WHEN P IS NULL THEN 'Root'
+WHEN N IN (SELECT P FROM BST) THEN 'Inner'
+ELSE 'Leaf'
+END
+FROM BST
+ORDER by N;
+
+
+ans 142 --
+SELECT c.company_code, c.founder, COUNT(DISTINCT e.lead_manager_code), COUNT(DISTINCT e.senior_manager_code), COUNT(DISTINCT e.manager_code), COUNT(DISTINCT e.employee_code) FROM Company c
+JOIN Employee e ON c.company_code = e.company_code GROUP BY c.company_code, c.founder ORDER BY c.company_code;
+
+
+ans 143 --
+SELECT f1.X, f1.Y FROM Functions AS f1 
+WHERE f1.X = f1.Y AND
+(SELECT COUNT(*) FROM Functions WHERE X = f1.X AND Y = f1.Y) > 1
+UNION
+SELECT f1.X, f1.Y from Functions AS f1
+WHERE EXISTS(SELECT X, Y FROM Functions WHERE f1.X = Y AND f1.Y = X AND f1.X < X)
+ORDER BY X;
+
+
+ans 144 --
+select S1.name
+from Students s1 
+inner join Packages p1 on s1.id = p1.id
+inner join Friends f on s1.id = f.id
+inner join Students s2 on f.friend_id = s2.id
+inner join Packages p2 on s2.id = p2.id
+where p1.salary < p2.salary
+order by p2.salary; 
+
+
+ans 145 --
+SELECT S.hacker_id, name
+FROM Submissions AS S
+JOIN Hackers AS H ON S.hacker_id = H.hacker_id
+JOIN Challenges AS C ON S.challenge_id = C.challenge_id
+JOIN Difficulty AS D ON C.difficulty_level = D.difficulty_level
+WHERE S.score = D.score
+GROUP BY name, S.hacker_id
+HAVING count(S.challenge_id) > 1
+ORDER BY count(S.challenge_id) DESC, S.hacker_id;
+
+
+ans 146 --
+Select Start_Date, MIN(End_Date)
+From
+    (Select b.Start_Date
+    From Projects as a
+    RIGHT Join Projects as b
+    ON b.Start_Date = a.End_Date
+    WHERE a.Start_Date IS NULL
+    ) sd,
+    (Select a.End_Date
+    From Projects as a
+    Left Join Projects as b
+    ON b.Start_Date = a.End_Date
+    WHERE b.End_Date IS NULL
+    ) ed
+Where Start_Date < End_Date
+GROUP BY Start_Date
+ORDER BY datediff(MIN(End_Date), Start_Date), Start_Date;
+
+ans 148 --
+WITH T1 AS 
+  (SELECT
+   payer_id,
+   recipient_id
+  FROM payments
+  INTERSECT
+  SELECT
+   recipient_id,
+   payer_id
+  FROM payments)
+
+SELECT
+ COUNT(payer_id)/2 AS UNIQUE_RELATIONSHIPS
+FROM
+ T1;
+
+ans 153 --
+select advertiser_id, round(cast(sum(revenue)/sum(spend) as numeric),2) as ROAS
+from ad_campaigns 
+group by advertiser_id
+order by advertiser_id;
+
+
+ans 155 --
+WITH T1 AS 
+  (SELECT
+   payer_id,
+   recipient_id
+  FROM payments
+  INTERSECT
+  SELECT
+   recipient_id,
+   payer_id
+  FROM payments)
+
+SELECT
+ COUNT(payer_id)/2 AS UNIQUE_RELATIONSHIPS
+FROM
+ T1; 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

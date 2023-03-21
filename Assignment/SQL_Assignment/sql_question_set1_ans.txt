@@ -1,0 +1,377 @@
+ans 1 -- select * from city where countrycode = 'USA' AND  population > 100000;
+
+ans 2 -- select name from city where countrycode = 'USA' AND population > 120000;
+
+and 3 -- select * from city;
+
+ans 4 -- select * from city where ID = 1661;
+
+ans 5 -- select * from city where countrycode = 'JPN';
+
+ans 6 -- select DISTINCT name from city where countrycode = 'JPN';
+
+ans 7 -- select city, state from station;
+
+ans 8 -- select distinct city from station where mod(id,2) = 0;
+
+ans 9 -- select count(city) - count(distinct city) as Diff FROM station;
+
+ans 10 --
+(select city, length(city) as Len from station order by length(city) asc, city limit 1)
+union 
+(select city, length(city) as Len from station order by length(city) desc, city limit 1)
+
+ans 11 --
+select distinct city from station where city like 'a%'
+or city like 'e%'
+or city like 'i%' 
+or city like 'o%'
+or city like 'u%'
+order by city
+
+select distinct city from station where city regexp '^[aeiou]'
+order by city
+
+ans 12 --
+select distinct city from station where city like '%a'
+or city like '%e'
+or city like '%i'
+or city like '%o'
+or city like '%u'
+order by city
+
+select distinct city from station where city regexp '[aeiou]$'
+order by city
+
+ans 13 -- select distinct city from station where city not regexp '^[aeiou]' 
+order by city
+
+select distinct city from station where city regexp '^[^aeiou]'
+order by city
+
+ans 14 -- select distinct city from station where city not regexp '[aeiou]$'
+order by city
+
+select distinct city from station where city regexp '[^aeiou]$'
+order by city
+
+ans 15 -- select distinct city from station where city regexp '^[^aeiou]|[^aeiou]$'
+order by city
+
+ans 16 -- select distinct city from station where city regexp '^[^aeiou].*[^aeiou]$'
+order by city
+
+ans 17 --
+select product.product_id, product.product_name from product
+left join sales on product.product_id = sales.product_id
+group by product_id having min(sale_date) >= '2019-01-01' and max(sale_date) <= '2019-03-31';
+
+ans 18 --
+select distinct viewer_id  as id from views
+where viewer_id in (select distinct author_id from views)
+order by viewer_id
+
+ans 19 --
+select round((((select count(*) from delivery  where order_date = customer_pref_delivery_date) / count(*) * 100)),2) as immediate_percentage
+from delivery
+
+ans 20 --
+with temp as (
+select ad_id,
+sum(case when action='Clicked' then 1 else 0 end) as clicked,
+sum(case when action='Viewed' then 1 else 0 end) as viewed
+from ads
+group by ad_id)
+
+select ad_id,
+case when clicked+viewed = 0 then 0
+when((clicked/(clicked+viewed) *100) / round((clicked/(clicked+viewed) *100))) = 1 then round((clicked/(clicked+viewed) *100))
+else round((clicked/(clicked+viewed) *100),2) end as ctr 
+from temp
+order by ctr desc, ad_id
+
+ans 21 --
+select e1.employee_id, count(e2.employee_id) as team_size
+from employee e1
+inner join employee e2 on e1.team_id = e2.team_id
+group by employee_id
+order by employee_id
+
+WITH temp as(
+SELECT team_id,
+COUNT(*) as team_size
+FROM Employee
+GROUP BY team_id
+)
+SELECT e.employee_id,
+t.team_size
+FROM Employee as e left join temp as t
+ON e.team_id = t.team_id
+ORDER BY employee_id
+
+ans 22 -- 
+select c.country_name,
+case when avg(w.weather_state) <= 15 then 'Cold'
+when avg(w.weather_state) >= 25 then 'Hot'
+else 'Warm' end as weather_type
+from country c join weather w on c.country_id = w.country_id
+where left(day,7) = '2019-11'
+group by country_name 
+order by weather_type 
+
+ans 23 --
+select p.product_id,
+round(sum(p.price*u.units) / sum(u.units),2) as average_priec
+from prices p 
+inner join unitssold u on p.product_id = u.product_id
+where u.purchase_date between p.start_date and p.end_date
+group by product_id 
+
+ans 24 --
+select distinct player_id,
+min(event_date) over (partition by player_id) as first_login
+from activity
+
+select player_id, min(event_date)
+from activity
+group by player_id
+
+ans 25 --
+with temp as(
+select *,
+row_number() over (partition by player_id order by event_Date) as rnk
+from activity)
+select player_id, device_id from temp
+where rnk=1
+
+ans 26 --
+select p.product_name, sum(o.unit) as unit
+from product1 p inner join orders o
+on p.product_id = o.product_id
+where left(o.order_date,7) = '2020-02'
+group by p.product_id having sum(o.unit)>=100
+
+ans 27 -- select * from users where mail regexp'^[a-zA-Z][a-zA-Z0-9_.-]*@leetcode[.]com$'
+
+and 28 --
+with temp as (
+select o.customer_id, year(o.order_date) as years, month(o.order_date) as months,
+sum(o.quantity*p.price) as spend
+from orders1 o left join product2 p on o.product_id = p.product_id
+where year(o.order_date) = 2020 and month(o.order_date) in (6,7)
+group by o.customer_id, year(o.order_date), month(o.order_date)
+)
+select c.customer_id, c.name
+from customers c left join temp t on c.customer_id = t.customer_id
+where t.spend >= 100
+group by c.customer_id having count(t.months) =2
+
+and 29 --
+select distinct title
+from tvprogram t left join content c on t.content_id = c.content_id
+where left(t.program_date,7) = '2020-06' 
+and c.kids_content = 'Y'
+and c.content_type = 'Movies'
+
+
+ans 30 --
+select q.id, q.year,
+case when NPV.npv is not null then npv
+else 0 end as npv
+from queries q left join NPV 
+on q.id = NPV.id 
+and q.year = NPV.year
+
+ans 31 --
+select q.id, q.year,
+case when NPV.npv is not null then npv
+else 0 end as npv
+from queries q left join NPV 
+on q.id = NPV.id 
+and q.year = NPV.year
+
+
+ans 32 --
+select e2.unique_id, e1.name
+from employee1 e1 left join EmployeeUNI e2
+on e1.id =e2.id
+
+ans 33 --
+select distinct u.name, 
+case when user_id is not null then sum(r.distance) over (partition by r.user_id) 
+else 0 end as travelled_distance
+from user1 u left join rider r 
+on u.id = r.user_id
+order by travelled_distance desc, u.name
+
+
+ans 34 --
+select a.product_name, sum(unit) as unit
+from Products a
+left join Orders b
+on a.product_id = b.product_id
+where b.order_date between '2020-02-01' and '2020-02-29'
+group by a.product_id
+having sum(unit) >= 100;
+
+ans 35 --
+SELECT user_name AS results FROM
+(
+SELECT a.name AS user_name, COUNT(*) AS counts FROM MovieRating AS b
+    JOIN Users AS a
+    on a.user_id = b.user_id
+    GROUP BY b.user_id
+    ORDER BY counts DESC, user_name ASC LIMIT 1
+) first_query
+UNION
+SELECT movie_name AS results FROM
+(
+SELECT c.title AS movie_name, AVG(d.rating) AS rate FROM MovieRating AS d
+    JOIN Movies AS c
+    on c.movie_id = d.movie_id
+    WHERE substr(d.created_at, 1, 7) = '2020-02'
+    GROUP BY d.movie_id
+    ORDER BY rate DESC, movie_name ASC LIMIT 1
+) second_query;
+
+
+ans 36 --
+select u.name , sum(ifnull(r.distance,0)) as travelled_distance
+from users u left join rides r
+on u.id = r.user_id
+group by u.name
+order by travelled_distance desc, u.name
+
+ans 37 --
+select en.unique_id, name
+from employees e left join EmployeeUNI en
+on e.id=en.id
+
+ans 38 --
+select s.id, s.name from students s
+left join departments d
+on s.department_id = d.id
+where d.id is null
+
+ans 39 --
+SELECT LEAST(from_id,to_id) as person1,
+GREATEST(from_id,to_id) as person2,
+COUNT(*) as call_count,
+SUM(duration) as total_duration
+FROM Calls
+GROUP BY person1,person2;
+
+ans 40 --
+with cte as(
+select p.product_id, u.units, price*units as cost from prices p left join unitssold u
+on p.product_id = u.product_id
+where u.purchase_date between p.start_date and p.end_Date)
+select product_id,
+round(sum(cost)/sum(units),2) from cte 
+group by product_id
+
+ans 41 --
+select name as warehouse_name, sum(units * vol) as volume
+from Warehouse w
+join (select product_id, Width*Length*Height as vol
+     from Products) p
+on w.product_id = p.product_id
+group by name;
+
+ans 42 --
+select a.sale_date, (a.sold_num - b.sold_num ) as diff from sales a
+left join sales b
+on a.sale_date = b.sale_date
+where a.fruit = 'apples' and b.fruit = 'oranges';
+
+ans 43 --
+with cte as (
+select count(a.player_id) as c
+from
+(select *,
+lag(event_date) over (partition by player_id) as tmp
+from activity) a
+where a.event_date-a.tmp =1 )
+select round(c/(select count(distinct player_id) from Activity),2) as fraction
+from cte
+
+ans 44 --
+select 
+    a.name 
+from 
+    Employee a 
+inner join 
+    Employee b 
+on (a.id = b.managerid) 
+group by a.name 
+having count(distinct b.id) >= 5;
+
+ans 45 --
+select distinct d.dept_name, 
+count(s.dept_id) over (partition by s.dept_id) as student_number from department d
+left join student s
+on d.dept_id = s.dept_id
+order by student_number desc, d.dept_name
+
+ans 46 --
+with cte as(
+select *,
+dense_rank() over (partition by customer_id order by product_key) as r
+from customer)
+select customer_id
+from cte
+group by customer_id having max(r) = (select count(distinct product_key) from product)
+
+ans 47 --
+SELECT
+project_id,
+employee_id
+FROM (
+SELECT
+p.project_id,
+p.employee_id,
+DENSE_RANK() OVER(PARTITION BY p.project_id ORDER BY e.experience_years DESC) as rnk
+FROM Project as p JOIN Employee as e
+ON p.employee_id = e.employee_id
+) x
+WHERE rnk = 1;
+
+ans 48 --
+select Books.book_id, name from Books join Orders
+on Books.book_id = Orders.book_id
+where available_from < '2019-05-23'
+and dispatch_date between '2018-06-23' and '2019-06-23'
+group by Books.book_id
+having sum(quantity) < 10
+union
+select book_id, name from Books
+where available_from < '2019-05-23'
+and book_id not in (
+select distinct book_id from Orders where dispatch_date between '2018-06-23' and '2019-06-23'
+);
+
+ans 49 --
+with cte as(
+select *, row_number() over (partition by student_id order by grade desc, course_id) rn
+from Enrollments
+)
+select student_id, course_id, grade from cte where rn = 1
+
+ans 50 --
+with cte as (
+(select first_player as ply, sum(first_score) as sc
+from matches
+group by first_player)
+union
+(select second_player as ply, sum(second_score) as sc
+from matches
+group by second_player)
+),
+cte2 as(
+select group_id, cte.ply, sc,
+row_number() over (partition by group_id order by sc desc, cte.ply) as rn
+from players p join cte
+on p.player_id = cte.ply)
+select group_id, ply as player_id from cte2 where rn = 1
+
+

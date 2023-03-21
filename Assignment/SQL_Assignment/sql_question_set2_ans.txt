@@ -1,0 +1,365 @@
+ans 51 --
+select name, population, area from World
+where area > 3000000 or population > 25000000
+
+ans 52 --
+select name from Customer where referee_id <> 2 or referee_id is null;
+
+ans 53 --
+SELECT C.Name FROM Customers C LEFT JOIN Orders O ON C.Id = O.CustomerId WHERE O.CustomerId is NULL;
+
+ans 54 --
+SELECT employee_id, COUNT(team_id) OVER (PARTITION BY team_id) team_size FROM Employee;
+
+ans 55 --
+select c.name as country
+from person p
+left join country c
+on left(p.phone_number,3) = c.country_code
+left join calls ca
+on p.id in (ca.caller_id, ca.callee_id)
+group by c.name
+having avg(ca.duration) > (select avg(duration) from calls)
+
+ans 56 --
+select player_id, device_id from (
+select *,
+row_number() over (partition by player_id order by event_date) as rk
+from activity) a
+where rk = 1
+
+ans 57 --
+SELECT customer_number FROM Orders
+GROUP BY customer_number
+ORDER BY COUNT(*) DESC
+LIMIT 1
+
+ans 58 --
+SELECT DISTINCT t1.seat_id
+FROM Cinema AS t1 JOIN Cinema AS t2
+ON abs(t1.seat_id - t2.seat_id) = 1
+AND t1.free = 1 AND t2.free = 1
+ORDER BY 1
+
+ans 59 --
+with cte as (
+select sales_id
+from orders o
+left join company c
+on c.com_id = o.com_id
+where c.name = 'RED')
+select s.name from SalesPerson s
+left join cte
+on cte.sales_id = s.sales_id
+where cte.sales_id is null
+
+ans 60 --
+SELECT x,y,z
+CASE WHEN x + y > z AND y + z > x AND z + x > y THEN 'Yes'
+     ELSE 'No' END AS triangle
+FROM Triangle;
+
+ans 61 --
+select min(abs(p2.x-p1.x)) as shortest
+from Point p1, Point p2
+where p1.x != p2.x;
+
+ans 62 --
+select distinct actor_id, director_id from (
+select *,
+count(timestamp) over (partition by actor_id, director_id) as c
+from ActorDirector) a
+where c >2
+or 
+select actor_id, director_id from actordirector
+group by actor_id, director_id
+having count(*) > 2
+
+ans 63 --
+select p.product_name, s.year, s.price
+from Product p
+join Sales s
+on s.product_id = p.product_id
+
+ans 64 --
+select project_id , round(avg(experience_years), 2) as average_years
+from Project as p
+left join Employee as e
+on p.employee_id = e.employee_id
+group by project_id
+
+ans 65 --
+select a.seller_id
+from 
+(select seller_id, sum(price) as sum 
+from Sales
+group by seller_id) a 
+where a.sum = (select max(b.sum)from(select seller_id, sum(price) as sum 
+from Sales
+group by seller_id)b );
+
+ans 66 --
+select distinct buyer_id
+from product p
+left join sales s
+on p.product_id = s.product_id
+where p.product_name = 'S8' and p.product_name <> 'iPhone'
+
+ans 67 --
+select c1.visited_on, sum(c2.amount) as amount, 
+round(avg(c2.amount), 2) as average_amount
+from (select visited_on, sum(amount) as amount 
+from Customer group by visited_on) c1
+join (select visited_on, sum(amount) as amount 
+from Customer group by visited_on) c2
+on datediff(c1.visited_on, c2.visited_on) between 0 and 6
+group by c1.visited_on
+having count(c2.amount) = 7;
+
+ans 68 --
+select gender, day,
+sum(score_points) over (partition by gender order by gender, day) as a
+from scores
+
+ans 69 --
+select min(log_id) as start_id, max(log_id) as end_id
+from(
+select l.log_id, (l.log_id - l.row_num) as diff
+from (select log_id, row_number() over() as row_num from Logs) l) l2
+group by diff
+
+ans 70 --
+select a.student_id, a.student_name, b.subject_name, count(c.subject_name) as attended_exams
+from Students as a
+join Subjects as b
+left join Examinations as c
+on a.student_id = c.student_id and b.subject_name = c.subject_name
+group by a.student_id, b.subject_name;
+
+ans 71 --
+select  e1.employee_id
+from Employees e1
+left join employees e2
+on e1.manager_id = e2.employee_id
+left join employees e3
+on e2.manager_id = e3.employee_id
+where e3.manager_id = 1 and e1.employee_id <>1
+
+ans 72 --
+SELECT DATE_FORMAT(trans_date, '%Y-%m') AS month, country,
+COUNT(1) AS trans_count,
+COUNT(if(state = 'approved', 1, NULL)) AS approved_count,
+SUM(amount) AS trans_total_amount,
+SUM(if(state = 'approved', amount, 0)) AS approved_total_amount
+FROM Transactions
+GROUP BY month, country;
+
+ans 73 --
+SELECT ROUND(AVG(percentage),2) AS average_daily_percent
+FROM (
+SELECT action_date, 
+(COUNT(DISTINCT b.post_id)/COUNT(DISTINCT a.post_id))*100 AS percentage 
+FROM Actions AS a
+LEFT JOIN Removals AS b
+ON a.post_id = b.post_id
+WHERE a.action = 'report'
+AND a.extra = 'spam'
+GROUP BY a.action_date) t
+
+ans 74 --
+select round((player_id)/(select count(distinct player_id) from activity),2) as fraction
+from (
+select player_id, event_date,
+lead(event_date) over (partition by player_id order by event_date) as a
+from activity)b
+where a is not null
+and a - event_date = 1
+
+ans 75 --
+select round((player_id)/(select count(distinct player_id) from activity),2) as fraction
+from (
+select player_id, event_date,
+lead(event_date) over (partition by player_id order by event_date) as a
+from activity)b
+where a is not null
+and a - event_date = 1
+
+ans 76 --
+with cte as(
+select *,
+case when sum_c < 1000 then 0
+	when sum_c between 1000 and 10000 then floor((24*salary/100))
+	when sum_c > 10000 then floor((49*salary/100)) 
+    end as tax_salary
+from (
+select *,
+max(salary) over (partition by company_id) sum_c
+from salaries)a)
+select company_id, employee_id, employee_name, (salary-tax_salary) as salary
+from cte
+
+ans 77 --
+select e.left_operand,e.operator,e.right_operand,
+case when e.operator = '<' then if(l.value < r.value, 'true', 'false')
+	when e.operator = '>' then if (l.value > r.value, 'true', 'false')
+    else if(l.value = r.value, 'true', 'false')
+	end as value
+from expressions e
+left join variables l on e.left_operand = l.name
+left join variables r on e.right_operand = r.name
+
+ans 78 --
+select c.name as country
+from person p
+left join country c
+on convert(left(p.phone_number,3),unsigned) = c.country_code
+left join calls ca
+on p.id in (ca.caller_id, ca.callee_id)
+group by c.name
+having avg(ca.duration) > (select avg(duration) from calls)
+
+ans 79--
+select distinct name from employee
+order by name
+
+ans 80 --
+with cte as (
+SELECT
+DATE_PART('year', transaction_date) as year,
+product_id,
+spend as curr_year_spend,
+lag(spend)OVER(PARTITION BY product_id ORDER BY DATE_PART('year', transaction_date)) as prev_year_spend
+FROM user_transactions
+)
+SELECT
+year,
+product_id,
+curr_year_spend,
+prev_year_spend,
+CASE
+  WHEN prev_year_spend IS NULL THEN NULL
+  ELSE ROUND(100*(curr_year_spend - prev_year_spend)/ prev_year_spend, 2)
+  END as yoy_rate
+FROM cte
+
+ans 81 --
+WITH cte as(
+SELECT item_type as it, count(square_footage) as cit, SUM(square_footage) as sit,
+TRUNC((500000 / sum(square_footage)),0) as str_cat,
+(TRUNC((500000 / sum(square_footage)),0)*count(square_footage)) as str_cat_count
+FROM inventory
+group by item_type)
+
+select it as item_type, str_cat_count as item_count from cte
+where it = 'prime_eligible'
+UNION
+SELECT it as item_type, 
+TRUNC(((500000 - (select str_cat * sit from cte where it = 'prime_eligible'))/ (select sit from cte where it = 'not_prime')),0) * (select cit from cte where it = 'not_prime') as itme_count 
+from cte
+where it = 'not_prime'
+order by item_count DESC
+
+ans 82 --
+with cte as (
+SELECT *,
+lag(event_date) OVER(PARTITION BY user_id order by event_date) as t 
+FROM user_actions
+where EXTRACT(month from event_date) = 6 or EXTRACT(month from event_date) = 7)
+select '7' as month, count(user_id) as monthly_active_user
+from cte
+where (EXTRACT(month from event_date) - EXTRACT(month from t)) = 1
+
+ans 83 --
+WITH cte AS (
+SELECT searches
+FROM search_frequency
+GROUP BY 
+searches, 
+GENERATE_SERIES(1, num_users))
+SELECT 
+ROUND(PERCENTILE_CONT(0.50) WITHIN GROUP (
+ORDER BY searches)::DECIMAL, 1) AS  median
+FROM cte;
+
+ans 84 --
+select 
+coalesce(a.user_id, dp.user_id) as user_id, 
+case when a.user_id is null then 'NEW'
+when dp.user_id is null then 'CHURN' 
+when a.status = 'CHURN' then 'RESURRECT'
+else 'EXISTING' end as new_status
+from advertiser a 
+full join daily_pay dp 
+on a.user_id = dp.user_id
+order by 1
+
+ans 85 --
+with cte as (
+SELECT
+server_id,
+session_status,
+status_time AS start_time,
+LEAD(status_time) OVER (
+PARTITION BY server_id
+ORDER BY status_time) AS stop_time
+FROM server_utilization)
+SELECT
+DATE_PART('days', JUSTIFY_HOURS(SUM(stop_time - start_time))) AS total_uptime_days
+FROM cte
+WHERE session_status = 'start'
+AND stop_time IS NOT NULL;
+
+ans 86 --
+WITH payments AS (
+SELECT 
+merchant_id, 
+EXTRACT(EPOCH FROM transaction_timestamp - 
+LAG(transaction_timestamp) OVER(
+PARTITION BY merchant_id, credit_card_id, amount 
+ORDER BY transaction_timestamp)
+)/60 AS minute_difference 
+FROM transactions) 
+
+SELECT COUNT(merchant_id) AS payment_count
+FROM payments 
+WHERE minute_difference <= 10;
+
+ans 88 --
+select s1.gender, s1.day, sum(s2.score_points) as total from Scores s1, Scores s2
+where s1.gender = s2.gender and s1.day >= s2.day
+group by s1.gender, s1.day
+order by s1.gender, s1.day;
+
+ans 89 --
+select c.name as country
+from person p
+left join country c
+on left(p.phone_number,3) = c.country_code
+left join calls ca
+on p.id in (ca.caller_id, ca.callee_id)
+group by c.name
+having avg(ca.duration) > (select avg(duration) from calls)
+
+ans 90 --
+SET @rowindex := -1;
+SELECT
+AVG(d.frequency) as Median 
+FROM
+(SELECT @rowindex:=@rowindex + 1 AS rowindex,
+Numbers.frequency AS frequency
+FROM Numbers
+ORDER BY Numbers.frequency) AS d
+WHERE
+d.rowindex IN (FLOOR(@rowindex / 2), CEIL(@rowindex / 2));
+
+
+
+
+
+
+
+
+
+
+
+
